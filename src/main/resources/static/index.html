@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abarrotes "El Trébol" - Punto de Venta e Inventario</title>
+    <style>
+        :root { --primary: #15803d; --primary-dark: #166534; --bg: #f3f4f6; --card: #ffffff; --text: #1f2937; --danger: #dc2626; --warn: #d97706; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { margin: 0; background: var(--bg); color: var(--text); }
+        header { background: var(--primary); color: white; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; }
+        header h1 { margin: 0; font-size: 1.25rem; }
+        .container { max-width: 1200px; margin: 20px auto; padding: 0 16px; }
+        .card { background: var(--card); border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px; }
+        .login-box { max-width: 400px; margin: 80px auto; }
+        input, select { width: 100%; padding: 10px; margin: 6px 0 14px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.95rem; }
+        button { background: var(--primary); color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem; }
+        button:hover { background: var(--primary-dark); }
+        button.secondary { background: #4b5563; }
+        button.danger { background: var(--danger); }
+        .tabs { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+        .tabs button.active { background: #111827; }
+        .grid-2 { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+        @media(max-width: 850px) { .grid-2 { grid-template-columns: 1fr; } }
+        table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+        th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #e5e7eb; }
+        th { background: #f9fafb; }
+        .badge-low { background: #fef2f2; color: var(--danger); padding: 3px 8px; border-radius: 12px; font-weight: 700; font-size: 0.8rem; }
+        .badge-ok { background: #f0fdf4; color: var(--primary); padding: 3px 8px; border-radius: 12px; font-weight: 600; font-size: 0.8rem; }
+        .alert { padding: 10px 14px; border-radius: 6px; margin-bottom: 14px; font-weight: 500; }
+        .alert-err { background: #fee2e2; color: #991b1b; }
+        .alert-ok { background: #dcfce7; color: #166534; }
+        .hidden { display: none !important; }
+        .total-banner { font-size: 1.6rem; font-weight: 800; color: var(--primary); margin: 12px 0; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>?? Abarrotes "El Trébol" ? Sistema POS e Inventario</h1>
+    <div id="userBar" class="hidden">
+        <span id="userInfo" style="margin-right: 12px;"></span>
+        <button class="secondary" onclick="logout()">Cerrar Sesión</button>
+    </div>
+</header>
+
+<div class="container">
+    <div id="globalMsg" class="alert hidden"></div>
+
+    <!-- PANTALLA DE LOGIN (RF-01) -->
+    <div id="loginView" class="card login-box">
+        <h2 style="margin-top:0;">Iniciar Sesión</h2>
+        <label>Usuario</label>
+        <input type="text" id="loginUser" placeholder="Ej. admin o cajero" value="admin">
+        <label>Contraseña</label>
+        <input type="password" id="loginPass" placeholder="????????" value="admin123">
+        <button style="width:100%;" onclick="login()">Entrar al Sistema</button>
+        <p style="font-size:0.82rem; color:#6b7280; margin-top:14px;">
+            Demo: <b>admin / admin123</b> (Dueño) | <b>cajero / cajero123</b> (Mostrador)
+        </p>
+    </div>
+
+    <!-- PANEL PRINCIPAL -->
+    <div id="appView" class="hidden">
+        <div class="tabs">
+            <button id="tabPos" class="active" onclick="showTab('pos')">?? Punto de Venta (Mostrador)</button>
+            <button id="tabInv" onclick="showTab('inv')">?? Inventario y Catálogo</button>
+            <button id="tabCut" onclick="showTab('cut')">?? Corte de Caja Diario</button>
+            <button id="tabUsr" class="admin-only" onclick="showTab('usr')">?? Usuarios</button>
+        </div>
+
+        <!-- VISTA 1: PUNTO DE VENTA (RF-05, RF-08, RF-09) -->
+        <div id="viewPos" class="grid-2">
+            <div class="card">
+                <h3 style="margin-top:0;">Buscar Productos (Nombre o Código de Barras)</h3>
+                <input type="text" id="searchPos" placeholder="Escribe nombre o escanea código..." onkeyup="buscarProductosPos()">
+                <table>
+                    <thead><tr><th>Código</th><th>Producto</th><th>Precio</th><th>Stock</th><th></th></tr></thead>
+                    <tbody id="posCatalogBody"></tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-top:0;">Ticket de Venta Actual</h3>
+                <table>
+                    <thead><tr><th>Artículo</th><th>Cant.</th><th>Subtotal</th><th></th></tr></thead>
+                    <tbody id="cartBody"></tbody>
+                </table>
+                <div class="total-banner">Total: $<span id="cartTotal">0.00</span></div>
+                <label>Método de Pago</label>
+                <select id="payMethod">
+                    <option value="EFECTIVO">Efectivo</option>
+                    <option value="TRANSFERENCIA">Transferencia</option>
+                    <option value="TARJETA">Tarjeta (Informativo)</option>
+                </select>
+                <label>Monto Recibido ($)</label>
+                <input type="number" step="0.50" id="cashReceived" placeholder="0.00" oninput="calcularCambio()">
+                <div style="font-size:1.15rem; font-weight:700; margin-bottom:14px;">
+                    Cambio a devolver: $<span id="changeAmount">0.00</span>
+                </div>
+                <button style="width:100%; font-size:1.05rem;" onclick="cobrarVenta()">? Confirmar y Cobrar Venta</button>
+            </div>
+        </div>
+
+        <!-- VISTA 2: INVENTARIO (RF-04, RF-06, RF-07) -->
+        <div id="viewInv" class="hidden">
+            <div id="lowStockBanner" class="alert alert-err hidden"></div>
+
+            <div class="card admin-only">
+                <h3 style="margin-top:0;">Registrar Nuevo Producto</h3>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:10px;">
+                    <input type="text" id="pCodigo" placeholder="Código de barras">
+                    <input type="text" id="pNombre" placeholder="Nombre del producto">
+                    <input type="text" id="pCat" placeholder="Categoría (ej. Bebidas)">
+                    <input type="number" step="0.50" id="pPrecio" placeholder="Precio Venta ($)">
+                    <input type="number" id="pStock" placeholder="Stock Inicial">
+                    <input type="number" id="pMin" placeholder="Stock Mínimo">
+                </div>
+                <button onclick="crearProducto()">+ Guardar Producto</button>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-top:0;">Existencias en Tienda</h3>
+                <table>
+                    <thead><tr><th>Código</th><th>Producto</th><th>Categoría</th><th>Precio</th><th>Stock</th><th>Mín.</th><th>Estado</th><th class="admin-only">Acciones</th></tr></thead>
+                    <tbody id="invBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- VISTA 3: CORTE DE CAJA (RF-10) -->
+        <div id="viewCut" class="hidden">
+            <div class="card">
+                <h3 style="margin-top:0;">Corte de Caja Diario</h3>
+                <div style="display:flex; gap:10px; max-width:360px; align-items:center;">
+                    <input type="date" id="cutDate">
+                    <button onclick="cargarCorte()">Consultar</button>
+                </div>
+                <div class="total-banner" id="cutSummary">Ventas: 0 | Total: $0.00</div>
+                <table>
+                    <thead><tr><th>Folio</th><th>Hora</th><th>Cajero</th><th>Método</th><th>Total</th><th>Recibido</th><th>Cambio</th></tr></thead>
+                    <tbody id="cutBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- VISTA 4: USUARIOS (RF-02, RF-03) -->
+        <div id="viewUsr" class="hidden">
+            <div class="card">
+                <h3 style="margin-top:0;">Registrar Empleado</h3>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:10px;">
+                    <input type="text" id="uNombre" placeholder="Nombre completo">
+                    <input type="text" id="uUser" placeholder="Usuario">
+                    <input type="password" id="uPass" placeholder="Contraseña">
+                    <select id="uRol"><option value="CAJERO">CAJERO</option><option value="ADMIN">ADMIN</option></select>
+                </div>
+                <button onclick="crearUsuario()">Crear Cuenta</button>
+            </div>
+            <div class="card">
+                <table>
+                    <thead><tr><th>ID</th><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Estado</th></tr></thead>
+                    <tbody id="usrBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let token = localStorage.getItem('token') || '';
+let role = localStorage.getItem('role') || '';
+let userName = localStorage.getItem('userName') || '';
+let productosCache = [];
+let carrito = [];
+
+function notify(msg, isErr = false) {
+    const el = document.getElementById('globalMsg');
+    el.textContent = msg;
+    el.className = 'alert ' + (isErr ? 'alert-err' : 'alert-ok');
+    setTimeout(() => el.classList.add('hidden'), 4000);
+}
+
+async function api(url, opts = {}) {
+    opts.headers = { 'Content-Type': 'application/json', ...(token ? { 'Authorization': 'Bearer ' + token } : {}), ...(opts.headers || {}) };
+    const res = await fetch(url, opts);
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Error en la operación (' + res.status + ')');
+    return data;
+}
+
+async function login() {
+    try {
+        const data = await api('/api/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ username: document.getElementById('loginUser').value, password: document.getElementById('loginPass').value })
+        });
+        token = data.token; role = data.rol; userName = data.nombreCompleto;
+        localStorage.setItem('token', token); localStorage.setItem('role', role); localStorage.setItem('userName', userName);
+        initApp();
+    } catch (e) { notify(e.message, true); }
+}
+
+function logout() {
+    localStorage.clear(); token = ''; location.reload();
+}
+
+function initApp() {
+    if (!token) return;
+    document.getElementById('loginView').classList.add('hidden');
+    document.getElementById('appView').classList.remove('hidden');
+    document.getElementById('userBar').classList.remove('hidden');
+    document.getElementById('userInfo').textContent = `${userName} (${role})`;
+    document.querySelectorAll('.admin-only').forEach(el => el.classList.toggle('hidden', role !== 'ADMIN'));
+    document.getElementById('cutDate').valueAsDate = new Date();
+    buscarProductosPos();
+}
+
+function showTab(tab) {
+    ['pos','inv','cut','usr'].forEach(t => {
+        document.getElementById('view' + t.charAt(0).toUpperCase() + t.slice(1)).classList.toggle('hidden', t !== tab);
+        document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1)).classList.toggle('active', t === tab);
+    });
+    if (tab === 'pos') buscarProductosPos();
+    if (tab === 'inv') cargarInventario();
+    if (tab === 'cut') cargarCorte();
+    if (tab === 'usr') cargarUsuarios();
+}
+
+async function buscarProductosPos() {
+    try {
+        const q = document.getElementById('searchPos').value;
+        productosCache = await api('/api/inventory?q=' + encodeURIComponent(q));
+        document.getElementById('posCatalogBody').innerHTML = productosCache.map(p => `
+            <tr>
+                <td>${p.codigo}</td><td>${p.nombre}</td><td>$${p.precioVenta.toFixed(2)}</td>
+                <td>${p.stockActual}</td>
+                <td><button onclick="agregarCarrito(${p.id})" ${p.stockActual <= 0 ? 'disabled' : ''}>+ Agregar</button></td>
+            </tr>`).join('');
+    } catch (e) { notify(e.message, true); }
+}
+
+function agregarCarrito(id) {
+    const prod = productosCache.find(p => p.id === id);
+    if (!prod) return;
+    const item = carrito.find(c => c.productoId === id);
+    if (item) {
+        if (item.cantidad + 1 > prod.stockActual) return notify('No hay más stock disponible', true);
+        item.cantidad++;
+    } else {
+        carrito.push({ productoId: prod.id, nombre: prod.nombre, precio: prod.precioVenta, cantidad: 1 });
+    }
+    renderCarrito();
+}
+
+function quitarCarrito(id) {
+    carrito = carrito.filter(c => c.productoId !== id);
+    renderCarrito();
+}
+
+function renderCarrito() {
+    let total = 0;
+    document.getElementById('cartBody').innerHTML = carrito.map(c => {
+        const sub = c.precio * c.cantidad; total += sub;
+        return `<tr><td>${c.nombre}</td><td>${c.cantidad}</td><td>$${sub.toFixed(2)}</td>
+                <td><button class="danger" style="padding:4px 8px;" onclick="quitarCarrito(${c.productoId})">X</button></td></tr>`;
+    }).join('');
+    document.getElementById('cartTotal').textContent = total.toFixed(2);
+    calcularCambio();
+}
+
+function calcularCambio() {
+    const total = parseFloat(document.getElementById('cartTotal').textContent) || 0;
+    const rec = parseFloat(document.getElementById('cashReceived').value) || 0;
+    document.getElementById('changeAmount').textContent = Math.max(0, rec - total).toFixed(2);
+}
+
+async function cobrarVenta() {
+    try {
+        const total = parseFloat(document.getElementById('cartTotal').textContent) || 0;
+        const metodoPago = document.getElementById('payMethod').value;
+        const montoRecibido = parseFloat(document.getElementById('cashReceived').value) || total;
+        const venta = await api('/api/sales', {
+            method: 'POST',
+            body: JSON.stringify({ metodoPago, montoRecibido, items: carrito.map(c => ({ productoId: c.productoId, cantidad: c.cantidad })) })
+        });
+        notify(`Venta #${venta.id} registrada por $${venta.total.toFixed(2)}. Cambio: $${venta.cambio.toFixed(2)}`);
+        carrito = []; renderCarrito(); document.getElementById('cashReceived').value = '';
+        buscarProductosPos();
+    } catch (e) { notify(e.message, true); }
+}
+
+async function cargarInventario() {
+    try {
+        const lista = await api('/api/inventory');
+        const bajos = lista.filter(p => p.stockBajo);
+        const banner = document.getElementById('lowStockBanner');
+        if (bajos.length > 0) {
+            banner.textContent = '?? Alerta de stock mínimo en: ' + bajos.map(b => `${b.nombre} (${b.stockActual} uds)`).join(', ');
+            banner.classList.remove('hidden');
+        } else banner.classList.add('hidden');
+
+        document.getElementById('invBody').innerHTML = lista.map(p => `
+            <tr>
+                <td>${p.codigo}</td><td>${p.nombre}</td><td>${p.categoria}</td><td>$${p.precioVenta.toFixed(2)}</td>
+                <td><b>${p.stockActual}</b></td><td>${p.stockMinimo}</td>
+                <td>${p.stockBajo ? '<span class="badge-low">Stock Bajo</span>' : '<span class="badge-ok">Óptimo</span>'}</td>
+                <td class="${role !== 'ADMIN' ? 'hidden' : ''}">
+                    <button onclick="resurtir(${p.id})">+ Resurtir</button>
+                </td>
+            </tr>`).join('');
+    } catch (e) { notify(e.message, true); }
+}
+
+async function crearProducto() {
+    try {
+        await api('/api/inventory', {
+            method: 'POST',
+            body: JSON.stringify({
+                codigo: document.getElementById('pCodigo').value,
+                nombre: document.getElementById('pNombre').value,
+                categoria: document.getElementById('pCat').value,
+                precioVenta: parseFloat(document.getElementById('pPrecio').value),
+                stockActual: parseInt(document.getElementById('pStock').value),
+                stockMinimo: parseInt(document.getElementById('pMin').value)
+            })
+        });
+        notify('Producto registrado correctamente');
+        cargarInventario();
+    } catch (e) { notify(e.message, true); }
+}
+
+async function resurtir(id) {
+    const cant = prompt('¿Cuántas unidades ingresan al almacén?');
+    if (!cant) return;
+    try {
+        await api(`/api/inventory/${id}/restock`, { method: 'PATCH', body: JSON.stringify({ cantidad: parseInt(cant) }) });
+        notify('Inventario actualizado');
+        cargarInventario();
+    } catch (e) { notify(e.message, true); }
+}
+
+async function cargarCorte() {
+    try {
+        const fecha = document.getElementById('cutDate').value;
+        const data = await api('/api/sales/daily-summary?date=' + fecha);
+        document.getElementById('cutSummary').textContent = `Ventas del ${data.fecha}: ${data.cantidadVentas} | Total Recaudado: $${data.totalRecaudado.toFixed(2)}`;
+        document.getElementById('cutBody').innerHTML = data.ventas.map(v => `
+            <tr><td>#${v.id}</td><td>${v.fechaHora.replace('T',' ').substring(0,16)}</td><td>${v.cajero}</td>
+            <td>${v.metodoPago}</td><td>$${v.total.toFixed(2)}</td><td>$${v.montoRecibido.toFixed(2)}</td><td>$${v.cambio.toFixed(2)}</td></tr>`).join('');
+    } catch (e) { notify(e.message, true); }
+}
+
+async function cargarUsuarios() {
+    try {
+        const lista = await api('/api/users');
+        document.getElementById('usrBody').innerHTML = lista.map(u => `
+            <tr><td>${u.id}</td><td>${u.nombreCompleto}</td><td>${u.username}</td><td>${u.rol}</td><td>${u.activo ? 'Activo' : 'Inactivo'}</td></tr>`).join('');
+    } catch (e) { notify(e.message, true); }
+}
+
+async function crearUsuario() {
+    try {
+        await api('/api/users', {
+            method: 'POST',
+            body: JSON.stringify({
+                nombreCompleto: document.getElementById('uNombre').value,
+                username: document.getElementById('uUser').value,
+                password: document.getElementById('uPass').value,
+                rol: document.getElementById('uRol').value
+            })
+        });
+        notify('Usuario creado'); cargarUsuarios();
+    } catch (e) { notify(e.message, true); }
+}
+
+initApp();
+</script>
+</body>
+</html>

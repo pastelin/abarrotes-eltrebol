@@ -1,0 +1,26 @@
+name: CI - Build y Pruebas JUnit (Abarrotes El Trébol)
+
+on:
+  push:
+    branches: [ "master", "develop", "feature/**" ]
+  pull_request:
+    branches: [ "master", "develop" ]
+
+jobs:
+  build-and-test:
+    name: Compilar y ejecutar pruebas JUnit 5
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 1. Descargar código del repositorio
+        uses: actions/checkout@v4
+
+      - name: 2. Configurar Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: 3. Ejecutar pruebas unitarias y de integración con Maven
+        run: mvn -B clean test
