@@ -1,40 +1,42 @@
-# ?? Abarrotes "El Trébol" ? Sistema POS e Inventario
+# ?? Abarrotes "El Trï¿½bol" ? Sistema POS e Inventario
 
-## Descripción del Proyecto
-Solución web empresarial desarrollada en **Java 17 y Spring Boot** para la gestión integral de ventas en mostrador (POS), control de inventarios en tiempo real y corte de caja diario de la PyME **Abarrotes "El Trébol"**.
+## Descripciï¿½n del Proyecto
+Soluciï¿½n web empresarial desarrollada en **Java 17 y Spring Boot** para la gestiï¿½n integral de ventas en mostrador (POS), control de inventarios en tiempo real y corte de caja diario de la PyME **Abarrotes "El Trï¿½bol"**.
 
-## Problemática y Análisis
-Anteriormente, el establecimiento llevaba el control de ventas, precios y entradas de mercancía en un cuaderno físico, provocando desabasto inesperado, errores manuales de cálculo en horas pico y falta de visibilidad financiera diaria.
+## Problemï¿½tica y Anï¿½lisis
+Anteriormente, el establecimiento llevaba el control de ventas, precios y entradas de mercancï¿½a en un cuaderno fï¿½sico, provocando desabasto inesperado, errores manuales de cï¿½lculo en horas pico y falta de visibilidad financiera diaria.
 
-## Solución Desarrollada
-Aplicación web modular basada en arquitectura orientada a servicios independientes:
-- **Módulo de Seguridad (`auth`):** Autenticación mediante **JWT**, cifrado de contraseñas con **BCrypt** y control de acceso basado en roles (`ADMIN` y `CAJERO`).
-- **Módulo de Inventario (`inventory`):** Gestión CRUD de productos, búsqueda rápida por nombre/código, registro de resurtidos y alertas automáticas de stock mínimo.
-- **Módulo de Ventas (`sales`):** Carrito de punto de venta, cálculo automático de cambio, descuento transaccional de existencias y consulta de corte de caja diario.
+## Soluciï¿½n Desarrollada
+Aplicaciï¿½n web modular basada en arquitectura orientada a servicios independientes:
+- **Mï¿½dulo de Seguridad (`auth`):** Autenticaciï¿½n mediante **JWT**, cifrado de contraseï¿½as con **BCrypt** y control de acceso basado en roles (`ADMIN` y `CAJERO`).
+- **Mï¿½dulo de Inventario (`inventory`):** Gestiï¿½n CRUD de productos, bï¿½squeda rï¿½pida por nombre/cï¿½digo, registro de resurtidos y alertas automï¿½ticas de stock mï¿½nimo.
+- **Mï¿½dulo de Ventas (`sales`):** Carrito de punto de venta, cï¿½lculo automï¿½tico de cambio, descuento transaccional de existencias y consulta de corte de caja diario.
 
 ## Requisitos Funcionales Cubiertos
-- **RF-01:** Inicio de sesión con credenciales institucionales.
+- **RF-01:** Inicio de sesiï¿½n con credenciales institucionales.
 - **RF-02:** Control de acceso por roles (`ADMIN` / `CAJERO`).
-- **RF-03:** Alta, consulta y gestión de cuentas de empleados.
-- **RF-04:** CRUD completo de catálogo de productos.
-- **RF-05:** Búsqueda rápida por nombre o código de barras.
-- **RF-06:** Registro de resurtido de mercancía.
+- **RF-03:** Alta, consulta y gestiï¿½n de cuentas de empleados.
+- **RF-04:** CRUD completo de catï¿½logo de productos.
+- **RF-05:** Bï¿½squeda rï¿½pida por nombre o cï¿½digo de barras.
+- **RF-06:** Registro de resurtido de mercancï¿½a.
 - **RF-07:** Alertas visuales de productos con stock bajo.
-- **RF-08:** Carrito de venta en mostrador y cálculo de cambio.
-- **RF-09:** Validación y descuento automático de inventario al confirmar venta.
+- **RF-08:** Carrito de venta en mostrador y cï¿½lculo de cambio.
+- **RF-09:** Validaciï¿½n y descuento automï¿½tico de inventario al confirmar venta.
 - **RF-10:** Historial de transacciones y corte de caja diario.
 
-## Tecnologías Utilizadas
+## Tecnologï¿½as Utilizadas
 - Java 17 (JDK 17)
 - Spring Boot 3.3.5 (Web, Security, Data JPA, Validation)
 - Base de Datos H2 (persistencia en archivo local compatible con MySQL)
 - JUnit 5 & Spring Security Test
-- GitHub Actions (Integración Continua) & GitHub Projects (Kanban)
+- GitHub Actions (Integraciï¿½n Continua) & GitHub Projects (Kanban)
 
-## Ejecución Local
+## Ejecuciï¿½n Local
 ```bash
 # Ejecutar pruebas automatizadas
 mvn clean test
 
 # Iniciar servidor web en http://localhost:8080
 mvn spring-boot:run
+
+Pruueba de flujo Gitflow y Pull request hacia develop
